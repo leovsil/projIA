@@ -24,6 +24,13 @@ from search import (
     recursive_best_first_search,
 )
 
+UNKNOWN = -1
+INACTIVE = 0
+ACTIVE = 1
+DOT = None
+CORNER = None
+
+
 class SlitherlinkState:
     state_id = 0
 
@@ -54,9 +61,9 @@ class Board:
         #top right bottom left
         if row > 1:
             adjacent_cells.append((row - 2, column))
-        if column < self.ncolumns - 2:
+        if column < 2 * self.ncolumns - 1:
             adjacent_cells.append((row, column + 2))
-        if row < self.nrows - 2:
+        if row < 2 * self.nrows - 1:
             adjacent_cells.append((row + 2, column))
         if column > 1:
             adjacent_cells.append((row, column - 2))
@@ -64,14 +71,17 @@ class Board:
         return adjacent_cells
 
     def get_cell_edges(self, row:int, column:int) -> list:
-        """Devolve os arestas da célula enviada no argumento"""
-        #TODO
-        pass
+        """Devolve as arestas da célula enviada no argumento"""
+        return [
+            (row - 1, column),  # top
+            (row, column + 1),  # right
+            (row + 1, column),  # bottom
+            (row, column - 1),  # left
+        ]
 
-    def get_active_edges(self, row:int, column:int) -> list:
+    def get_active_edges(self, row:int, column:int) -> int:
         """Devolve o número de arestas ativas"""
-        #TODO
-        pass
+        return sum(1 for r, c in self.get_cell_edges(row, column) if self.board[r][c] == ACTIVE)
 
 
     @staticmethod
@@ -96,22 +106,23 @@ class Board:
         for i in range(nrows):
             final_board.append([])
             for j in range(ncolumns):
-                final_board[current_row].append("")
-                final_board[current_row].append("-")
-            final_board[current_row].append("")
+                final_board[current_row].append(CORNER)
+                final_board[current_row].append(UNKNOWN)
+            final_board[current_row].append(CORNER)
             current_row+=1
             final_board.append([])
             for j in range(ncolumns):
-                final_board[current_row].append("|")
-                final_board[current_row].append(board[i][j])
-            final_board[current_row].append("|")
+                final_board[current_row].append(UNKNOWN)
+                clue = board[i][j]
+                final_board[current_row].append(DOT if clue == '.' else int(clue))
+            final_board[current_row].append(UNKNOWN)
             current_row+=1
 
         final_board.append([])
         for j in range(ncolumns):
-            final_board[current_row].append("")
-            final_board[current_row].append("-")
-        final_board[current_row].append("")
+            final_board[current_row].append(CORNER)
+            final_board[current_row].append(UNKNOWN)
+        final_board[current_row].append(CORNER)
 
         return Board(nrows, ncolumns, final_board)
     
