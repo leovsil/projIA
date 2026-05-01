@@ -24,9 +24,6 @@ from search import (
     recursive_best_first_search,
 )
 
-# Constantes para representar os estados das arestas do tabuleiro
-DOT = -1
-
 class SlitherlinkState:
     state_id = 0
 
@@ -43,17 +40,28 @@ class SlitherlinkState:
 
 class Board:
     """Representação interna de um tabuleiro de Slitherlink."""
-    def __init__(self, nrows:int, ncolumns:int, clues:list):
+    def __init__(self, nrows:int, ncolumns:int, board:list):
         self.nrows = nrows
         self.ncolumns = ncolumns
-        self.clues = clues
-        self.board = [[-1 for _ in range(ncolumns)] for _ in range(nrows)]
+        self.board = board
 
     def adjacent_cell(self, cell:tuple) -> list:
         """Devolve uma lista das células que fazem
         fronteira com a célula enviada no argumento"""
-        #TODO
-        pass
+        adjacent_cells = []
+        row, column = cell
+
+        #top right bottom left
+        if row > 1:
+            adjacent_cells.append((row - 2, column))
+        if column < self.ncolumns - 2:
+            adjacent_cells.append((row, column + 2))
+        if row < self.nrows - 2:
+            adjacent_cells.append((row + 2, column))
+        if column > 1:
+            adjacent_cells.append((row, column - 2))
+
+        return adjacent_cells
 
     def get_cell_edges(self, row:int, column:int) -> list:
         """Devolve os arestas da célula enviada no argumento"""
@@ -82,8 +90,31 @@ class Board:
         board = [row.split('\t') for row in rows]
         nrows = len(board)
         ncolumns = len(board[0])
-        return Board(nrows, ncolumns, board)
+        final_board = []
+        current_row = 0
 
+        for i in range(nrows):
+            final_board.append([])
+            for j in range(ncolumns):
+                final_board[current_row].append("")
+                final_board[current_row].append("-")
+            final_board[current_row].append("")
+            current_row+=1
+            final_board.append([])
+            for j in range(ncolumns):
+                final_board[current_row].append("|")
+                final_board[current_row].append(board[i][j])
+            final_board[current_row].append("|")
+            current_row+=1
+
+        final_board.append([])
+        for j in range(ncolumns):
+            final_board[current_row].append("")
+            final_board[current_row].append("-")
+        final_board[current_row].append("")
+
+        return Board(nrows, ncolumns, final_board)
+    
     # TODO: outros metodos da classe
 
 class Slitherlink(Problem):
