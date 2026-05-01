@@ -92,7 +92,7 @@ class Board:
                 for edge in edges:
                     r,c = edge
                     output += "1" if self.board[r][c] == ACTIVE else "0"
-                if j != 2*self.ncolumns:
+                if j != 2*self.ncolumns-1:
                     output += '\t'
             output += '\n'
         return output
