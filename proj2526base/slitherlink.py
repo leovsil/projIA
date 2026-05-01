@@ -77,9 +77,12 @@ class Board:
             > from sys import stdin
             > line = stdin.readline().split()
         """
-        
-        # TODO
-        pass
+        data = stdin.read()
+        rows = data.split('\n')
+        board = [row.split('\t') for row in rows]
+        nrows = len(board)
+        ncolumns = len(board[0])
+        return Board(nrows, ncolumns, board)
 
     # TODO: outros metodos da classe
 
