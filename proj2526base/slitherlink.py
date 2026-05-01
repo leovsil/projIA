@@ -83,7 +83,20 @@ class Board:
         """Devolve o número de arestas ativas"""
         return sum(1 for r, c in self.get_cell_edges(row, column) if self.board[r][c] == ACTIVE)
 
-
+    def output_board(self) -> str:
+        """Devolve o output da board"""
+        output = ""
+        for i in range(1, 2*self.nrows+1, 2):
+            for j in range(1, 2*self.ncolumns+1, 2):
+                edges = self.get_cell_edges(i,j)
+                for edge in edges:
+                    r,c = edge
+                    output += "1" if self.board[r][c] == ACTIVE else "0"
+                if j != 2*self.ncolumns:
+                    output += '\t'
+            output += '\n'
+        return output
+    
     @staticmethod
     def parse_instance():
         """Lê o test do standard input (stdin) que é passado como argumento
@@ -95,9 +108,9 @@ class Board:
             > from sys import stdin
             > line = stdin.readline().split()
         """
-        data = stdin.read()
+        data = stdin.read().strip()
         rows = data.split('\n')
-        board = [row.split('\t') for row in rows]
+        board = [row.split() for row in rows]
         nrows = len(board)
         ncolumns = len(board[0])
         final_board = []
@@ -175,7 +188,8 @@ if __name__ == "__main__":
 
 
 
-
+test = Board.parse_instance()
+print(test.output_board())
 
 
 
