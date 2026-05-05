@@ -29,6 +29,10 @@ INACTIVE = 0
 ACTIVE = 1
 DOT = None
 CORNER = None
+TOP = 0
+RIGHT = 1
+BOTTOM = 2
+LEFT = 3
 
 
 class SlitherlinkState:
@@ -61,14 +65,91 @@ class Board:
         #top right bottom left
         if row > 1:
             adjacent_cells.append((row - 2, column))
+        else:
+            adjacent_cells.append(None)
+
         if column < 2 * self.ncolumns - 1:
             adjacent_cells.append((row, column + 2))
+        else:
+            adjacent_cells.append(None)
+
         if row < 2 * self.nrows - 1:
             adjacent_cells.append((row + 2, column))
+        else:
+            adjacent_cells.append(None)
+
         if column > 1:
             adjacent_cells.append((row, column - 2))
+        else:
+            adjacent_cells.append(None)
 
         return adjacent_cells
+    
+    def is_in_board(self, cell_or_edge: tuple) -> bool: #check
+        r,c = cell_or_edge
+        if r < 0 or r > 2 * self.nrows:
+            return False
+        if c < 0 or c > 2 * self.ncolumns:
+            return False
+        return True
+
+    def activate_edge(self, edge: tuple) -> None:
+        if (not self.is_in_board(edge)):
+            return
+        r,c = edge
+        self.board[r][c] = ACTIVE
+
+    def deactivate_edge(self, edge:tuple) -> None:
+        if (not self.is_in_board(edge)):
+            return
+        r,c = edge
+        self.board[r][c] = INACTIVE
+
+    def deactivate_zero(self, cell:tuple) -> None:
+        if (not self.is_in_board(edge)):
+            return
+        for edge in self.get_cell_edges(cell):
+            self.deactivate_edge(edge)
+
+    #Defined cases
+    def fill_3_adjacent_0(self, cell:tuple, cell0:tuple, pos0:int) -> None:
+        self.deactivate_zero(cell0)
+        edges=self.get_cell_edges(cell)
+        for i in range(4):
+            if i != pos0:
+                self.activate_edge(edges[i])
+
+        if (pos0 == TOP or pos0 == BOTTOM):
+            row = (cell[0] + cell0[0]) / 2
+            column = cell[1]
+            self.activate_edge((row,column-1))
+            self.activate_edge((row,column+1))
+
+        elif (pos0 == RIGHT or pos0 == LEFT):
+            column = (cell[1] + cell0[1]) / 2
+            row = cell[1]
+            self.activate_edge((row+1,column))
+            self.activate_edge((row-1,column))
+
+    def case_3_adjacent_0(self, cell: tuple) -> tuple:
+        """Verifica se a célula dada corresponde
+        a um 3 com um 0 adjacente"""
+        adjacent_cells = self.adjacent_cell(cell)
+        for i in range(4):
+            adj = self.adjacent_cell[i]
+            if adj!=None and self.get_cell_value(adj)==0:
+                self.fill_3_adjacent_0(cell, adj, i)
+                
+
+
+    def check_defined_cases(self) -> tuple:
+        """Verifica se existem casos padrão de
+        resolução, e devolve a célula onde ocorre"""
+        pass
+
+    def get_cell_value(self, cell:tuple) -> int:
+        r,c = cell
+        return self.board[r][c]
 
     def get_cell_edges(self, row:int, column:int) -> list:
         """Devolve as arestas da célula enviada no argumento"""
@@ -82,6 +163,10 @@ class Board:
     def get_active_edges(self, row:int, column:int) -> int:
         """Devolve o número de arestas ativas"""
         return sum(1 for r, c in self.get_cell_edges(row, column) if self.board[r][c] == ACTIVE)
+
+    def get_inactive_edges(self, row:int, column:int) -> int:
+        """Devolve o número de arestas inativas"""
+        return sum(1 for r,c in self.get_cell_edges(row,column) if self.board[r][c] == INACTIVE)
 
     def output_board(self) -> str:
         """Devolve o output da board"""
