@@ -84,6 +84,35 @@ class Board:
             adjacent_cells.append(None)
 
         return adjacent_cells
+
+    def diagonal_cell(self, cell:tuple) -> list:
+        """Devolve uma lista das células na diagonal
+        da célula enviada no argumento"""
+        diagonal_cells = []
+        row,column = cell
+
+        #Top-Right Bottom-Right Bottom-Left Top-Left
+        if (self.is_in_board((row-2,column+2))):
+            diagonal_cells.append((row-2,column+2))
+        else:
+            diagonal_cells.append(None)
+        
+        if (self.is_in_board((row+2,column+2))):
+            diagonal_cells.append((row+2,column+2))
+        else:
+            diagonal_cells.append(None)
+
+        if (self.is_in_board((row+2,column-2))):
+            diagonal_cells.append((row+2,column-2))
+        else:
+            diagonal_cells.append(None)
+
+        if (self.is_in_board((row-2,column-2))):
+            diagonal_cells.append((row-2,column-2))
+        else:
+            diagonal_cells.append(None)
+
+        return diagonal_cells
     
     def is_in_board(self, cell_or_edge: tuple) -> bool: #check
         r,c = cell_or_edge
@@ -132,23 +161,37 @@ class Board:
             self.activate_edge((row-1,column))
 
 
-    def case_3_adjacent_0(self, cell: tuple) -> tuple: #nao devia devolver None??
+    def case_3_adjacent_0(self, cell: tuple) -> None: #nao devia devolver None??
         """Verifica se a célula dada corresponde
         a um 3 com um 0 adjacente"""
         adjacent_cells = self.adjacent_cell(cell)
         for i in range(4):
-            adj = self.adjacent_cell[i]  #adj = adjacent_cells[i]???
+            adj = adjacent_cells[i]  #adj = adjacent_cells[i]???
             if adj!=None and self.get_cell_value(adj)==0: #tem uma célula adjacente com o valor 0
                 self.fill_3_adjacent_0(cell, adj, i)
     
-                
+    def fill_3_diagonal_0(self, cell:tuple, cell0: tuple, pos0: int) -> None:
+        self.deactivate_zero(cell0)
+        edges=self.get_cell_edges(cell) #edges da celula 3
+        #ativar as edges mais perto do 0
+        self.activate_edge(edges[pos0]) 
+        self.activate_edge(edges[(pos0 + 1)%4])
+
+    def case_3_diagonal_0(self, cell: tuple) -> None:
+        """Verifica se a célula dada corresponde
+        a um 3 com um 0 diagonal"""          
+        adjacent_cells = self.diagonal_cell(cell)
+        for i in range(4):
+            adj = adjacent_cells[i]  #adj = adjacent_cells[i]???
+            if adj!=None and self.get_cell_value(adj)==0: #tem uma célula adjacente com o valor 0
+                self.fill_3_diagonal_0(cell, adj, i)
 
     def case_3_adjacent_3 (self, cell: tuple) -> tuple: 
         """Verifica se a célula dada corresponde
         a um 3 com um 3 adjacente"""
         adjacent_cells = self.adjacent_cell(cell) #células adjacentes à celula dada
         for i in range(4): #percorre as diferentes 4 opcões
-            adj = self.adjacent_cell[i]
+            adj = adjacent_cells[i]
             if adj!=None and self.get_cell_value(adj)==3: #verifica que tem uma célula adjacente com valor 3
                 self.fill_3_adjacent_3(cell, adj, i)
                 
