@@ -112,15 +112,15 @@ class Board:
             self.deactivate_edge(edge)
 
     #Defined cases
-    def fill_3_adjacent_0(self, cell:tuple, cell0:tuple, pos0:int) -> None:
-        self.deactivate_zero(cell0)
-        edges=self.get_cell_edges(cell)
+    def fill_3_adjacent_0(self, cell:tuple, cell0:tuple, pos0:int) -> None: #pos0 é a inidce da posicao da celula 0
+        self.deactivate_zero(cell0) #desativa todas as arestas da célula 0
+        edges=self.get_cell_edges(cell) #edges da celula 3
         for i in range(4):
             if i != pos0:
-                self.activate_edge(edges[i])
+                self.activate_edge(edges[i]) #ativar as edges que nao estao em contacto com o 0 (mesmo indice da posiçao)
 
-        if (pos0 == TOP or pos0 == BOTTOM):
-            row = (cell[0] + cell0[0]) / 2
+        if (pos0 == TOP or pos0 == BOTTOM): #se o 0 estiver em cima ou em baixo
+            row = (cell[0] + cell0[0]) / 2 #row da aresta entre o 3 e o 0
             column = cell[1]
             self.activate_edge((row,column-1))
             self.activate_edge((row,column+1))
@@ -131,14 +131,26 @@ class Board:
             self.activate_edge((row+1,column))
             self.activate_edge((row-1,column))
 
-    def case_3_adjacent_0(self, cell: tuple) -> tuple:
+
+    def case_3_adjacent_0(self, cell: tuple) -> tuple: #nao devia devolver None??
         """Verifica se a célula dada corresponde
         a um 3 com um 0 adjacente"""
         adjacent_cells = self.adjacent_cell(cell)
         for i in range(4):
-            adj = self.adjacent_cell[i]
-            if adj!=None and self.get_cell_value(adj)==0:
+            adj = self.adjacent_cell[i]  #adj = adjacent_cells[i]???
+            if adj!=None and self.get_cell_value(adj)==0: #tem uma célula adjacente com o valor 0
                 self.fill_3_adjacent_0(cell, adj, i)
+    
+                
+
+    def case_3_adjacent_3 (self, cell: tuple) -> tuple: 
+        """Verifica se a célula dada corresponde
+        a um 3 com um 3 adjacente"""
+        adjacent_cells = self.adjacent_cell(cell) #células adjacentes à celula dada
+        for i in range(4): #percorre as diferentes 4 opcões
+            adj = self.adjacent_cell[i]
+            if adj!=None and self.get_cell_value(adj)==3: #verifica que tem uma célula adjacente com valor 3
+                self.fill_3_adjacent_3(cell, adj, i)
                 
 
 
