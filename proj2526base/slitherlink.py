@@ -27,12 +27,19 @@ from search import (
 UNKNOWN = -1
 INACTIVE = 0
 ACTIVE = 1
+
 DOT = None
 CORNER = None
+
 TOP = 0
 RIGHT = 1
 BOTTOM = 2
 LEFT = 3
+
+TOP_RIGHT = 0
+BOTTOM_RIGHT = 1
+BOTTOM_LEFT = 2
+TOP_LEFT = 3
 
 
 class SlitherlinkState:
@@ -140,6 +147,24 @@ class Board:
         for edge in self.get_cell_edges(cell[0],cell[1]):
             self.deactivate_edge(edge)
 
+    def activate_corner(self, cell:tuple, corner_pos: int):
+        r,c = cell
+        if (corner_pos == TOP_RIGHT):
+            self.activate_edge((r-1,c))
+            self.activate_edge((r,c+1))
+
+        elif (corner_pos == BOTTOM_RIGHT):
+            self.activate_edge((r,c+1))
+            self.activate_edge((r+1,c))
+
+        elif (corner_pos == BOTTOM_LEFT):
+            self.activate_edge((r+1,c))
+            self.activate_edge((r,c-1))
+
+        elif (corner_pos == TOP_LEFT):
+            self.activate_edge((r,c-1))
+            self.activate_edge((r-1,c))
+
     #Defined cases
     def fill_3_adjacent_0(self, cell:tuple, cell0:tuple, pos0:int) -> None: #pos0 é a inidce da posicao da celula 0
         self.deactivate_zero(cell0) #desativa todas as arestas da célula 0
@@ -184,15 +209,15 @@ class Board:
     def case_3_diagonal_0(self, cell: tuple) -> bool:
         """Verifica se a célula dada corresponde
         a um 3 com um 0 diagonal"""          
-        adjacent_cells = self.diagonal_cell(cell)
+        diagonal_cells = self.diagonal_cell(cell)
         for i in range(4):
-            adj = adjacent_cells[i]  
-            if adj!=None and self.get_cell_value(adj)==0: #tem uma célula adjacente com o valor 0
-                self.fill_3_diagonal_0(cell, adj, i)
+            diag = diagonal_cells[i]  
+            if diag!=None and self.get_cell_value(diag)==0: #tem uma célula adjacente com o valor 0
+                self.fill_3_diagonal_0(cell, diag, i)
                 return True
         return False
 
-    def case_3_adjacent_3 (self, cell: tuple) -> tuple: 
+    def case_3_adjacent_3 (self, cell: tuple) -> bool: 
         """Verifica se a célula dada corresponde
         a um 3 com um 3 adjacente"""
         adjacent_cells = self.adjacent_cell(cell) #células adjacentes à celula dada
@@ -202,8 +227,27 @@ class Board:
                 self.fill_3_adjacent_3(cell, adj, i)
                 return True
         return False
-                
 
+    def fill_2_diagonal_double_3 (self, diag:tuple, other_diag:tuple, posDiag:int):
+        if (posDiag == TOP_RIGHT):
+            self.activate_corner(diag, TOP_RIGHT)
+            self.activate_corner(other_diag, BOTTOM_LEFT)
+        elif (posDiag == BOTTOM_RIGHT):
+            self.activate_corner(diag, BOTTOM_RIGHT)
+            self.activate_corner(other_diag, TOP_LEFT)
+
+    def case_2_diagonal_double_3 (self, cell:tuple) -> bool:
+        """Verifica se a célula dada corresponde
+        a um 2 com dois 3 numa das diagonais"""          
+        diagonal_cells = self.diagonal_cell(cell)
+        for i in range(2):
+            diag = diagonal_cells[i] 
+            other_diag = diagonal_cells[i + 2]
+            if diag!=None and other_diag!=None and self.get_cell_value(diag)==3 and self.get_cell_value(other_diag)==3:
+                self.fill_2_diagonal_double_3(cell, diag, i)
+                return True
+        return False
+    
 
     def check_defined_cases(self) -> tuple:
         """Verifica se existem casos padrão de
@@ -356,9 +400,9 @@ for r in range(1, 2*board.nrows, 2):
         val = board.get_cell_value((r,c))
         if val == 3:
             if (board.case_3_adjacent_0((r,c))):
-                break
+                continue
             elif (board.case_3_diagonal_0((r,c))):
-                break
+                continue
         elif val == 0:
             board.deactivate_zero((r,c))
 
