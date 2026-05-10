@@ -289,7 +289,7 @@ class Board:
             diag = diagonal_cells[i] 
             other_diag = diagonal_cells[i + 2]
             if diag!=None and other_diag!=None and self.get_cell_value(diag)==3 and self.get_cell_value(other_diag)==3:
-                self.fill_2_diagonal_double_3(cell, diag, i)
+                self.fill_2_diagonal_double_3(diag, other_diag, i)
                 return True
         return False
     
@@ -483,6 +483,9 @@ for r in range(1, 2*board.nrows, 2):
             elif (board.case_3_diagonal_3((r,c))):
                 continue
             elif(board.case_corner_3((r,c))):
+                continue
+        elif val == 2:
+            if (board.case_2_diagonal_double_3((r,c))):
                 continue
         elif val == 0:
             board.deactivate_zero((r,c))
