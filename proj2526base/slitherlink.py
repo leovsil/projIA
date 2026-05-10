@@ -135,56 +135,62 @@ class Board:
         self.board[r][c] = INACTIVE
 
     def deactivate_zero(self, cell:tuple) -> None:
-        if (not self.is_in_board(edge)):
+        if (not self.is_in_board(cell)):
             return
-        for edge in self.get_cell_edges(cell):
+        for edge in self.get_cell_edges(cell[0],cell[1]):
             self.deactivate_edge(edge)
 
     #Defined cases
     def fill_3_adjacent_0(self, cell:tuple, cell0:tuple, pos0:int) -> None: #pos0 é a inidce da posicao da celula 0
         self.deactivate_zero(cell0) #desativa todas as arestas da célula 0
-        edges=self.get_cell_edges(cell) #edges da celula 3
+        edges=self.get_cell_edges(cell[0],cell[1]) #edges da celula 3
         for i in range(4):
             if i != pos0:
                 self.activate_edge(edges[i]) #ativar as edges que nao estao em contacto com o 0 (mesmo indice da posiçao)
 
+        print(f"pos0: {pos0} ")
         if (pos0 == TOP or pos0 == BOTTOM): #se o 0 estiver em cima ou em baixo
-            row = (cell[0] + cell0[0]) / 2 #row da aresta entre o 3 e o 0
+            row = (cell[0] + cell0[0]) // 2 #row da aresta entre o 3 e o 0
             column = cell[1]
-            self.activate_edge((row,column-1))
-            self.activate_edge((row,column+1))
+            print(f"row,column: ({row},{column})")
+            self.activate_edge((row,column-2))
+            self.activate_edge((row,column+2))
 
         elif (pos0 == RIGHT or pos0 == LEFT):
-            column = (cell[1] + cell0[1]) / 2
+            column = (cell[1] + cell0[1]) // 2
             row = cell[1]
-            self.activate_edge((row+1,column))
-            self.activate_edge((row-1,column))
+            self.activate_edge((row+2,column))
+            self.activate_edge((row-2,column))
 
 
-    def case_3_adjacent_0(self, cell: tuple) -> None: #nao devia devolver None??
+    def case_3_adjacent_0(self, cell: tuple) -> bool: #nao devia devolver None??
         """Verifica se a célula dada corresponde
         a um 3 com um 0 adjacente"""
         adjacent_cells = self.adjacent_cell(cell)
         for i in range(4):
-            adj = adjacent_cells[i]  #adj = adjacent_cells[i]???
+            adj = adjacent_cells[i]  
             if adj!=None and self.get_cell_value(adj)==0: #tem uma célula adjacente com o valor 0
                 self.fill_3_adjacent_0(cell, adj, i)
+                return True
+        return False
     
     def fill_3_diagonal_0(self, cell:tuple, cell0: tuple, pos0: int) -> None:
         self.deactivate_zero(cell0)
-        edges=self.get_cell_edges(cell) #edges da celula 3
+        edges=self.get_cell_edges(cell[0],cell[1]) #edges da celula 3
         #ativar as edges mais perto do 0
         self.activate_edge(edges[pos0]) 
         self.activate_edge(edges[(pos0 + 1)%4])
 
-    def case_3_diagonal_0(self, cell: tuple) -> None:
+    def case_3_diagonal_0(self, cell: tuple) -> bool:
         """Verifica se a célula dada corresponde
         a um 3 com um 0 diagonal"""          
         adjacent_cells = self.diagonal_cell(cell)
         for i in range(4):
-            adj = adjacent_cells[i]  #adj = adjacent_cells[i]???
+            adj = adjacent_cells[i]  
             if adj!=None and self.get_cell_value(adj)==0: #tem uma célula adjacente com o valor 0
                 self.fill_3_diagonal_0(cell, adj, i)
+                return True
+        return False
 
     def case_3_adjacent_3 (self, cell: tuple) -> tuple: 
         """Verifica se a célula dada corresponde
@@ -194,6 +200,8 @@ class Board:
             adj = adjacent_cells[i]
             if adj!=None and self.get_cell_value(adj)==3: #verifica que tem uma célula adjacente com valor 3
                 self.fill_3_adjacent_3(cell, adj, i)
+                return True
+        return False
                 
 
 
@@ -328,8 +336,50 @@ if __name__ == "__main__":
 
 
 
-test = Board.parse_instance()
-print(test.output_board())
+board = Board.parse_instance()
 
+print(f"Board {board.nrows}x{board.ncolumns}")
 
+print("Clues:")
+for r in range(1, 2*board.nrows, 2):
+    row_clues = [str(board.board[r][c]) for c in range(1, 2*board.ncolumns, 2)]
+    print("  " + " ".join(row_clues))
+
+board.activate_edge((0, 1))
+print(f"\nArestas ativas em célula (1,1): {board.get_active_edges(1, 1)}")
+
+print("\nOutput board:")
+print(board.output_board())
+
+for r in range(1, 2*board.nrows, 2):
+    for c in range(1, 2*board.ncolumns, 2):
+        val = board.get_cell_value((r,c))
+        if val == 3:
+            if (board.case_3_adjacent_0((r,c))):
+                break
+            elif (board.case_3_diagonal_0((r,c))):
+                break
+        elif val == 0:
+            board.deactivate_zero((r,c))
+
+print("\nOutput board:")
+print(board.output_board())
+
+print("\nBoard state:")
+edge_h = {-1: '?', 0: 'x', 1: '-'}
+edge_v = {-1: '?', 0: 'x', 1: '|'}
+
+for r in range(2 * board.nrows + 1):
+    row_str = ""
+    for c in range(2 * board.ncolumns + 1):
+        val = board.board[r][c]
+        if r % 2 == 0 and c % 2 == 0:   # canto
+            row_str += '+'
+        elif r % 2 == 0:                  # aresta horizontal
+            row_str += edge_h.get(val, '?') * 3
+        elif c % 2 == 0:                  # aresta vertical
+            row_str += edge_v.get(val, '?')
+        else:                             # célula
+            row_str += f' {val if val is not None else "."} '
+    print(row_str)
 
