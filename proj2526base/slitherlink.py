@@ -258,7 +258,7 @@ class Board:
                 return True
         return False
     
-    def fill_3_diagonal_3(self, cell: tuple, cell3: tuple, pos3: int) -> None:
+    def fill_3_diagonal_3(self, cell: tuple, cell3: tuple, pos3: int) -> None: #usar o activate corner 
         dot = ((cell[0] + cell3[0]) // 2, (cell[1] + cell3[1]) // 2)
         #print(dot)
         edges = self.get_cell_edges(cell[0], cell[1])
@@ -293,6 +293,36 @@ class Board:
                 return True
         return False
     
+    def case_corner_3(self, cell: tuple) -> bool:
+        """Verifica se a célula é um 3 num canto do tabuleiro."""
+
+        if self.get_cell_value(cell) != 3:
+            return False
+
+        adjacent_cells = self.adjacent_cell(cell)
+        # adjacent_cells = top,bottom,right,left
+
+        #canto superior esquerdo
+        if adjacent_cells[TOP] is None and adjacent_cells[LEFT] is None:
+            self.activate_corner(cell, TOP_LEFT)
+            return True
+
+        #canto superior direito
+        if adjacent_cells[TOP] is None and adjacent_cells[RIGHT] is None:
+            self.activate_corner(cell, TOP_RIGHT)
+            return True
+
+        #canto inferior direito
+        if adjacent_cells[BOTTOM] is None and adjacent_cells[RIGHT] is None:
+            self.activate_corner(cell, BOTTOM_RIGHT)
+            return True
+
+        #canto inferior esquerdo
+        if adjacent_cells[BOTTOM] is None and adjacent_cells[LEFT] is None:
+            self.activate_corner(cell, BOTTOM_LEFT)
+            return True
+
+        return False
 
     def check_defined_cases(self) -> tuple:
         """Verifica se existem casos padrão de
@@ -451,6 +481,8 @@ for r in range(1, 2*board.nrows, 2):
             elif (board.case_3_adjacent_3((r,c))):
                 continue
             elif (board.case_3_diagonal_3((r,c))):
+                continue
+            elif(board.case_corner_3((r,c))):
                 continue
         elif val == 0:
             board.deactivate_zero((r,c))
