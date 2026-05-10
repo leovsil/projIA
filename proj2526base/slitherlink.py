@@ -216,7 +216,7 @@ class Board:
                 self.fill_3_diagonal_0(cell, diag, i)
                 return True
         return False
-
+    
     def case_3_adjacent_3 (self, cell: tuple) -> bool: 
         """Verifica se a célula dada corresponde
         a um 3 com um 3 adjacente"""
@@ -227,6 +227,51 @@ class Board:
                 self.fill_3_adjacent_3(cell, adj, i)
                 return True
         return False
+    
+    def fill_3_adjacent_3(self, cell: tuple, cell3: tuple, pos3: int) -> None:
+        edges = self.get_cell_edges(cell[0], cell[1])
+        edges_cell3 = self.get_cell_edges(cell3[0], cell3[1])
+
+        shared_edge = edges[pos3]
+        self.activate_edge(shared_edge)
+
+        self.activate_edge(edges[(pos3 + 2) % 4])#aresta exterior da célula atual
+        self.activate_edge(edges_cell3[pos3])# Aresta exterior da célula adjacente
+
+        r, c = shared_edge
+        if pos3 == RIGHT or pos3 == LEFT:
+            self.deactivate_edge((r - 2, c))
+            self.deactivate_edge((r + 2, c))
+
+        elif pos3 == TOP or pos3 == BOTTOM:
+            self.deactivate_edge((r, c - 2))
+            self.deactivate_edge((r, c + 2))
+
+    def case_3_diagonal_3(self, cell: tuple) -> bool:
+        """Verifica se a célula dada corresponde
+        a um 3 com um 3 diagonal"""
+        adjacent_cells = self.diagonal_cell(cell) #células adjacentes à celula dada
+        for i in range(4): #percorre as diferentes 4 opcões
+            adj = adjacent_cells[i]
+            if adj!=None and self.get_cell_value(adj)==3: #verifica que tem uma célula adjacente com valor 3
+                self.fill_3_diagonal_3(cell, adj, i)
+                return True
+        return False
+    
+    def fill_3_diagonal_3(self, cell: tuple, cell3: tuple, pos3: int) -> None:
+        dot = ((cell[0] + cell3[0]) // 2, (cell[1] + cell3[1]) // 2)
+        #print(dot)
+        edges = self.get_cell_edges(cell[0], cell[1])
+        edges_cell3 = self.get_cell_edges(cell3[0], cell3[1])
+
+        edges_dot = self.get_cell_edges(dot[0], dot[1])
+        #print(edges_dot)
+        for i in edges:
+            if i not in edges_dot:
+                self.activate_edge(i)
+        for i in edges_cell3:
+            if i not in edges_dot:
+                self.activate_edge(i)
 
     def fill_2_diagonal_double_3 (self, diag:tuple, other_diag:tuple, posDiag:int):
         if (posDiag == TOP_RIGHT):
@@ -402,6 +447,10 @@ for r in range(1, 2*board.nrows, 2):
             if (board.case_3_adjacent_0((r,c))):
                 continue
             elif (board.case_3_diagonal_0((r,c))):
+                continue
+            elif (board.case_3_adjacent_3((r,c))):
+                continue
+            elif (board.case_3_diagonal_3((r,c))):
                 continue
         elif val == 0:
             board.deactivate_zero((r,c))
