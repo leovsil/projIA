@@ -324,10 +324,28 @@ class Board:
 
         return False
 
-    def check_defined_cases(self) -> tuple:
+    def check_defined_cases(self) -> None:
         """Verifica se existem casos padrão de
         resolução, e devolve a célula onde ocorre"""
-        pass
+        for r in range(1, 2*self.nrows, 2):
+            for c in range(1, 2*self.ncolumns, 2):
+                val = self.get_cell_value((r,c))
+                if val == 3:
+                    if (self.case_3_adjacent_0((r,c))):
+                        continue
+                    elif (self.case_3_diagonal_0((r,c))):
+                        continue
+                    elif (self.case_3_adjacent_3((r,c))):
+                        continue
+                    elif (self.case_3_diagonal_3((r,c))):
+                        continue
+                    elif(self.case_corner_3((r,c))):
+                        continue
+                elif val == 2:
+                    if (self.case_2_diagonal_double_3((r,c))):
+                        continue
+                elif val == 0:
+                    self.deactivate_zero((r,c))
 
     def get_cell_value(self, cell:tuple) -> int:
         r,c = cell
@@ -342,13 +360,115 @@ class Board:
             (row, column - 1),  # left
         ]
 
-    def get_active_edges(self, row:int, column:int) -> int:
+    def get_cell_active_edges(self, row:int, column:int):
+        """Devolve as arestas ativas da célula ou ponto enviado"""
+        active_edges = []
+        #Top Right Bottom Left
+        if row > 1 and self.get_cell_value((row-1,column)) == ACTIVE:
+            active_edges.append((row - 1, column))
+
+        if column < 2 * self.ncolumns - 1 and self.get_cell_value((row, column + 1)) == ACTIVE:
+            active_edges.append((row, column + 1))
+
+        if row < 2 * self.nrows - 1 and self.get_cell_value((row + 1, column)) == ACTIVE:
+            active_edges.append((row + 1, column))
+
+        if column > 1 and self.get_cell_value((row, column - 1)) == ACTIVE:
+            active_edges.append((row, column - 1))
+
+        return active_edges
+
+    def get_cell_active_edges_amount(self, row:int, column:int) -> int:
         """Devolve o número de arestas ativas"""
         return sum(1 for r, c in self.get_cell_edges(row, column) if self.board[r][c] == ACTIVE)
 
-    def get_inactive_edges(self, row:int, column:int) -> int:
+    def get_cell_inactive_edges_amount(self, row:int, column:int) -> int:
         """Devolve o número de arestas inativas"""
         return sum(1 for r,c in self.get_cell_edges(row,column) if self.board[r][c] == INACTIVE)
+
+    def get_amount_of_active_edges(self) -> int:
+        """Devolve o número total de arestas
+        ativas no tabuleiro"""
+        active_edges = 0
+        for r in range(0, 2*self.nrows + 1):
+            start_idx = (r%2 + 1)%2
+            for c in range(start_idx, 2*self.ncolumns + 1, 2):
+                if self.get_cell_value((r,c)) == ACTIVE:
+                    active_edges+=1
+        return active_edges
+
+    def get_active_edges(self) -> list:
+        """Devolve uma lista que contém as arestas
+        ativas do tabuleiro"""
+        active_edges= []
+        for r in range(0, 2*self.nrows + 1):
+            start_idx = (r%2 + 1)%2
+            for c in range(start_idx, 2*self.ncolumns + 1, 2):
+                if self.get_cell_value((r,c)) == ACTIVE:
+                    active_edges.append((r,c))
+        return active_edges
+
+    def get_unknown_edges(self) -> list:
+        """Devolve uma lista que contém as arestas
+        indecididas do tabuleiro"""
+        unknown_edges= []
+        for r in range(0, 2*self.nrows + 1):
+            start_idx = (r%2 + 1)%2
+            for c in range(start_idx, 2*self.ncolumns + 1, 2):
+                if self.get_cell_value((r,c)) == UNKNOWN:
+                    unknown_edges.append((r,c))
+        return unknown_edges
+    
+    def valid_dots(self)->bool:
+        for r in range(0, 2*self.nrows + 1, 2):
+            for c in range(0, 2*self.ncolumns + 1,2):
+                active_edges = self.get_cell_active_edges_amount(r,c)
+                if active_edges not in (0,2) :
+                    return False
+        return True
+    
+    def is_edge_vertical(self, edge:tuple) -> bool:
+        return edge[0]%2
+
+    def get_next_edge(self, edge:tuple, previous_dot: tuple = None) -> tuple:
+        r,c = edge
+        edge_dots
+        if self.is_edge_vertical(edge):
+            edge_dots = [(r-1,c),(r+1,c)]
+        else:
+            edge_dots = [(r,c-1),(r,c+1)]
+        
+        if previous_dot == None or previous_dot == edge_dots[0]:
+            next_idx = 1
+        else:
+            next_idx = 0
+        
+        #Aqui podemos assumir que o ponto tem exatamente duas active edges
+        for cell_edge in self.get_cell_active_edges(edge_dots[next_idx]):
+            if edge != cell_edge:
+                return cell_edge 
+
+    def check_loop(self) -> bool:
+        active_edges = self.get_active_edges()
+        first_edge = active_edges[0]
+        current_edge
+        processed_edges = 1
+        while True:
+            current_edge = self.get_next_edge(first_edge)
+            if current_edge == first_edge:
+                break
+            processed_edges+=1
+        if processed_edges == active_edges:
+            return True
+        return False
+
+    def valid_clues(self) -> bool:
+        for r in range(1, 2*board.nrows, 2):
+            for c in range(1, 2*board.ncolumns, 2):
+                cell = self.get_cell_value((r,c))
+                if cell!=DOT and self.get_cell_active_edges_amount(r,c) != cell:
+                    return False
+        return True
 
     def output_board(self) -> str:
         """Devolve o output da board"""
@@ -411,16 +531,13 @@ class Board:
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
         """O construtor especifica o estado inicial."""
-        # TODO
         pass
 
 
     def actions(self, state: SlitherlinkState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        # TODO
-        pass
-
+        return state.board.get_unknown_edges()
 
     def result(self, state: SlitherlinkState, action):
         """Retorna o estado resultante de executar a 'action' sobre
@@ -434,7 +551,7 @@ class Slitherlink(Problem):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
-        # TODO
+        return state.board.valid_dots() and state.board.check_loop() and state.board.valid_clues()
         pass
 
     def h(self, node: Node):
@@ -511,3 +628,4 @@ for r in range(2 * board.nrows + 1):
             row_str += f' {val if val is not None else "."} '
     print(row_str)
 
+print(board.get_unknown_edges())
