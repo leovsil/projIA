@@ -165,6 +165,43 @@ class Board:
             self.activate_edge((r,c-1))
             self.activate_edge((r-1,c))
 
+    def deactivate_corner(self, cell:tuple, corner_pos: int):
+        r,c = cell
+        if (corner_pos == TOP_RIGHT):
+            self.deactivate_edge((r-1,c))
+            self.deactivate_edge((r,c+1))
+
+        elif (corner_pos == BOTTOM_RIGHT):
+            self.deactivate_edge((r,c+1))
+            self.deactivate_edge((r+1,c))
+
+        elif (corner_pos == BOTTOM_LEFT):
+            self.deactivate_edge((r+1,c))
+            self.deactivate_edge((r,c-1))
+
+        elif (corner_pos == TOP_LEFT):
+            self.deactivate_edge((r,c-1))
+            self.deactivate_edge((r-1,c))
+
+    def activate_corner_2(self, cell: tuple, corner_pos: int):
+        r, c = cell
+
+        if corner_pos == TOP_LEFT:
+            self.activate_edge((r - 1, c + 2))
+            self.activate_edge((r + 2, c - 1))
+
+        elif corner_pos == TOP_RIGHT:
+            self.activate_edge((r - 1, c - 2))
+            self.activate_edge((r + 2, c + 1))
+
+        elif corner_pos == BOTTOM_LEFT:
+            self.activate_edge((r + 1, c + 2))
+            self.activate_edge((r - 2, c - 1))
+
+        elif corner_pos == BOTTOM_RIGHT:
+            self.activate_edge((r + 1, c - 2))
+            self.activate_edge((r - 2, c + 1))
+            
     #Defined cases
     def fill_3_adjacent_0(self, cell:tuple, cell0:tuple, pos0:int) -> None: #pos0 é a inidce da posicao da celula 0
         self.deactivate_zero(cell0) #desativa todas as arestas da célula 0
@@ -187,17 +224,6 @@ class Board:
             self.activate_edge((row+2,column))
             self.activate_edge((row-2,column))
 
-
-    def case_3_adjacent_0(self, cell: tuple) -> bool: #nao devia devolver None??
-        """Verifica se a célula dada corresponde
-        a um 3 com um 0 adjacente"""
-        adjacent_cells = self.adjacent_cell(cell)
-        for i in range(4):
-            adj = adjacent_cells[i]  
-            if adj!=None and self.get_cell_value(adj)==0: #tem uma célula adjacente com o valor 0
-                self.fill_3_adjacent_0(cell, adj, i)
-                return True
-        return False
     
     def fill_3_diagonal_0(self, cell:tuple, cell0: tuple, pos0: int) -> None:
         self.deactivate_zero(cell0)
@@ -206,7 +232,7 @@ class Board:
         self.activate_edge(edges[pos0]) 
         self.activate_edge(edges[(pos0 + 1)%4])
 
-    def case_3_diagonal_0(self, cell: tuple) -> bool:
+    def case_3_diagonal(self, cell: tuple) -> bool:
         """Verifica se a célula dada corresponde
         a um 3 com um 0 diagonal"""          
         diagonal_cells = self.diagonal_cell(cell)
@@ -215,18 +241,26 @@ class Board:
             if diag!=None and self.get_cell_value(diag)==0: #tem uma célula adjacente com o valor 0
                 self.fill_3_diagonal_0(cell, diag, i)
                 return True
+            if diag!=None and self.get_cell_value(diag)==3: #tem uma célula adjacente com o valor 3
+                self.fill_3_diagonal_3(cell, diag, i)
+                return True
         return False
     
-    def case_3_adjacent_3 (self, cell: tuple) -> bool: 
+    
+    def case_3_adjacent(self, cell: tuple) -> bool: 
         """Verifica se a célula dada corresponde
-        a um 3 com um 3 adjacente"""
+        a um 3 com um 0 adjacente e 3 adjacente"""
         adjacent_cells = self.adjacent_cell(cell) #células adjacentes à celula dada
-        for i in range(4): #percorre as diferentes 4 opcões
-            adj = adjacent_cells[i]
+        for i in range(4): #percorre as diferentes 4 opções
+            adj = adjacent_cells[i]  
+            if adj!=None and self.get_cell_value(adj)==0: #tem uma célula adjacente com o valor 0
+                self.fill_3_adjacent_0(cell, adj, i)
+                return True
             if adj!=None and self.get_cell_value(adj)==3: #verifica que tem uma célula adjacente com valor 3
                 self.fill_3_adjacent_3(cell, adj, i)
                 return True
         return False
+    
     
     def fill_3_adjacent_3(self, cell: tuple, cell3: tuple, pos3: int) -> None:
         edges = self.get_cell_edges(cell[0], cell[1])
@@ -247,16 +281,7 @@ class Board:
             self.deactivate_edge((r, c - 2))
             self.deactivate_edge((r, c + 2))
 
-    def case_3_diagonal_3(self, cell: tuple) -> bool:
-        """Verifica se a célula dada corresponde
-        a um 3 com um 3 diagonal"""
-        adjacent_cells = self.diagonal_cell(cell) #células adjacentes à celula dada
-        for i in range(4): #percorre as diferentes 4 opcões
-            adj = adjacent_cells[i]
-            if adj!=None and self.get_cell_value(adj)==3: #verifica que tem uma célula adjacente com valor 3
-                self.fill_3_diagonal_3(cell, adj, i)
-                return True
-        return False
+    
     
     def fill_3_diagonal_3(self, cell: tuple, cell3: tuple, pos3: int) -> None: #usar o activate corner 
         dot = ((cell[0] + cell3[0]) // 2, (cell[1] + cell3[1]) // 2)
@@ -293,36 +318,49 @@ class Board:
                 return True
         return False
     
-    def case_corner_3(self, cell: tuple) -> bool:
-        """Verifica se a célula é um 3 num canto do tabuleiro."""
+    
+    def case_corner(self, cell: tuple) -> bool:
+        """Verifica se a célula está num canto do tabuleiro.
+        Se for 3, ativa o canto.
+        Se for 2, aplica o caso do 2 no canto.
+        Se for 1, desativa o canto.
+        """
 
-        if self.get_cell_value(cell) != 3:
+        cell_value = self.get_cell_value(cell)
+        adjacent_cells = self.adjacent_cell(cell)
+
+        position = None
+
+        if adjacent_cells[TOP] is None and adjacent_cells[LEFT] is None:
+            position = TOP_LEFT
+
+        elif adjacent_cells[TOP] is None and adjacent_cells[RIGHT] is None:
+            position = TOP_RIGHT
+
+        elif adjacent_cells[BOTTOM] is None and adjacent_cells[RIGHT] is None:
+            position = BOTTOM_RIGHT
+
+        elif adjacent_cells[BOTTOM] is None and adjacent_cells[LEFT] is None:
+            position = BOTTOM_LEFT
+
+        # Se não está num canto, não faz nada
+        if position is None:
             return False
 
-        adjacent_cells = self.adjacent_cell(cell)
-        # adjacent_cells = top,bottom,right,left
-
-        #canto superior esquerdo
-        if adjacent_cells[TOP] is None and adjacent_cells[LEFT] is None:
-            self.activate_corner(cell, TOP_LEFT)
+        if cell_value == 3:
+            self.activate_corner(cell, position)
             return True
 
-        #canto superior direito
-        if adjacent_cells[TOP] is None and adjacent_cells[RIGHT] is None:
-            self.activate_corner(cell, TOP_RIGHT)
+        elif cell_value == 2:
+            self.activate_corner_2(cell, position)
             return True
 
-        #canto inferior direito
-        if adjacent_cells[BOTTOM] is None and adjacent_cells[RIGHT] is None:
-            self.activate_corner(cell, BOTTOM_RIGHT)
+        elif cell_value == 1:
+            self.deactivate_corner(cell, position)
             return True
-
-        #canto inferior esquerdo
-        if adjacent_cells[BOTTOM] is None and adjacent_cells[LEFT] is None:
-            self.activate_corner(cell, BOTTOM_LEFT)
-            return True
-
+        
         return False
+    
 
     def check_defined_cases(self) -> None:
         """Verifica se existem casos padrão de
@@ -591,21 +629,23 @@ for r in range(1, 2*board.nrows, 2):
     for c in range(1, 2*board.ncolumns, 2):
         val = board.get_cell_value((r,c))
         if val == 3:
-            if (board.case_3_adjacent_0((r,c))):
+            if (board.case_3_adjacent((r,c))):
                 continue
-            elif (board.case_3_diagonal_0((r,c))):
+            elif (board.case_3_diagonal((r,c))):
                 continue
-            elif (board.case_3_adjacent_3((r,c))):
-                continue
-            elif (board.case_3_diagonal_3((r,c))):
-                continue
-            elif(board.case_corner_3((r,c))):
+            elif(board.case_corner((r,c))):
                 continue
         elif val == 2:
             if (board.case_2_diagonal_double_3((r,c))):
                 continue
+            if (board.case_corner((r,c))):
+                continue
+        elif val == 1:
+            if (board.case_corner((r,c))):
+                continue
         elif val == 0:
             board.deactivate_zero((r,c))
+
 
 print("\nOutput board:")
 print(board.output_board())
