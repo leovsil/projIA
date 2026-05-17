@@ -468,37 +468,38 @@ class Board:
     def is_edge_vertical(self, edge:tuple) -> bool:
         return edge[0]%2
 
-    def get_next_edge(self, edge:tuple, previous_dot: tuple = None) -> tuple:
+    def get_next_edge_and_dot(self, edge:tuple, previous_dot: tuple = None) -> tuple:
         r,c = edge
-        edge_dots
         if self.is_edge_vertical(edge):
             edge_dots = [(r-1,c),(r+1,c)]
         else:
             edge_dots = [(r,c-1),(r,c+1)]
-        
+
         if previous_dot == None or previous_dot == edge_dots[0]:
             next_idx = 1
         else:
             next_idx = 0
-        
+
+        next_dot = edge_dots[next_idx]
         #Aqui podemos assumir que o ponto tem exatamente duas active edges
-        for cell_edge in self.get_cell_active_edges(edge_dots[next_idx]):
+        for cell_edge in self.get_cell_active_edges(*next_dot):
             if edge != cell_edge:
-                return cell_edge 
+                return cell_edge, next_dot
 
     def check_loop(self) -> bool:
         active_edges = self.get_active_edges()
+        if not active_edges:
+            return False
         first_edge = active_edges[0]
-        current_edge
+        current_edge = first_edge
+        previous_dot = None
         processed_edges = 1
         while True:
-            current_edge = self.get_next_edge(first_edge)
+            current_edge, previous_dot = self.get_next_edge_and_dot(current_edge, previous_dot)
             if current_edge == first_edge:
                 break
             processed_edges+=1
-        if processed_edges == active_edges:
-            return True
-        return False
+        return processed_edges == len(active_edges)
 
     def valid_clues(self) -> bool:
         for r in range(1, 2*board.nrows, 2):
