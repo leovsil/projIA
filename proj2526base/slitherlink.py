@@ -369,15 +369,11 @@ class Board:
             for c in range(1, 2*self.ncolumns, 2):
                 val = self.get_cell_value((r,c))
                 if val == 3:
-                    if (self.case_3_adjacent_0((r,c))):
+                    if (self.case_3_adjacent((r,c))):
                         continue
-                    elif (self.case_3_diagonal_0((r,c))):
+                    elif (self.case_3_diagonal((r,c))):
                         continue
-                    elif (self.case_3_adjacent_3((r,c))):
-                        continue
-                    elif (self.case_3_diagonal_3((r,c))):
-                        continue
-                    elif(self.case_corner_3((r,c))):
+                    elif(self.case_corner((r,c))):
                         continue
                 elif val == 2:
                     if (self.case_2_diagonal_double_3((r,c))):
@@ -570,28 +566,29 @@ class Board:
 class Slitherlink(Problem):
     def __init__(self, board: Board, gui=None):
         """O construtor especifica o estado inicial."""
-        pass
+        super().__init__(SlitherlinkState(board))
 
 
     def actions(self, state: SlitherlinkState):
         """Retorna uma lista de ações que podem ser executadas a
         partir do estado passado como argumento."""
-        return state.board.get_unknown_edges()
+        return [(r, c, v) for (r, c) in state.board.get_unknown_edges() for v in (ACTIVE, INACTIVE)]
 
     def result(self, state: SlitherlinkState, action):
         """Retorna o estado resultante de executar a 'action' sobre
         'state' passado como argumento. A ação a executar deve ser uma
         das presentes na lista obtida pela execução de
         self.actions(state)."""
-        # TODO
-        pass
+        r, c, val = action
+        new_board = copy.deepcopy(state.board)
+        new_board.board[r][c] = val
+        return SlitherlinkState(new_board)
 
     def goal_test(self, state: SlitherlinkState):
         """Retorna True se e só se o estado passado como argumento é
         um estado objetivo. Deve verificar se todas as posições do tabuleiro
         estão preenchidas de acordo com as regras do problema."""
         return state.board.valid_dots() and state.board.check_loop() and state.board.valid_clues()
-        pass
 
     def h(self, node: Node):
         """Função heuristica utilizada para a procura A*."""
